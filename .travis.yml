@@ -1,11 +1,13 @@
 language: php
 
-services:
-  - docker
+php:
+  - 7.4
 
-before_install:
-  - docker pull jhmachado12/php:7.4-laravel
-  - docker run -it --rm -v $(pwd):/app --env SHOULD_SKIP_MIGRATIONS=1 --env SHOULD_SKIP_SERVICES=1 jhmachado12/php:7.4-laravel
+before_script:
+  - chmod 755 -R storage
+  - composer install --no-interaction
+  - cp .env.testing .env
+  - php artisan key:generate
 
 script:
-  - travis-scripts/phpunit.sh
+  - vendor/bin/phpunit
