@@ -1,0 +1,11 @@
+language: php
+
+services:
+  - docker
+
+before_install:
+  - docker pull jhmachado12/php:7.4-laravel
+  - docker run -it --rm -v $(pwd):/app --env SHOULD_SKIP_MIGRATIONS=1 --env SHOULD_SKIP_SERVICES=1 jhmachado12/php:7.4-laravel
+
+script:
+  - travis-scripts/phpunit.sh
