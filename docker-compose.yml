@@ -1,0 +1,24 @@
+version: '3.4'
+
+services:
+  mysql:
+    image: jhmachado12/mysql:8
+    container_name: mysql
+    volumes:
+      - ./db-data/mysql:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_USER: root
+      MYSQL_DATABASE: main
+
+  app:
+    image: jhmachado12/php:7.4-laravel
+    container_name: app
+    depends_on:
+      - mysql
+    ports:
+      - "80:80"
+    volumes:
+      - .:/app:cached
