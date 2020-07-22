@@ -1,0 +1,23 @@
+{
+    "name": "jhmachado12/ticket-module",
+    "description": "The ticket module (domain) of the ticket system",
+    "type": "library",
+    "minimum-stability": "dev",
+    "require": {},
+    "autoload": {
+        "psr-4": {
+            "Ticket\\": "src/"
+        },
+        "classmap": [
+            "database/seeds",
+            "database/factories"
+        ]
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Ticket\\Service\\TicketServiceProvider"
+            ]
+        }
+    }
+}
