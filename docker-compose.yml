@@ -1,9 +1,8 @@
-version: '3.7'
+version: '3.4'
 
 services:
   mysql:
-    build:
-      context: ./mysqldocker
+    image: jhmachado12/mysql:8
     container_name: mysql
     volumes:
       - ./db-data/mysql:/var/lib/mysql
@@ -13,12 +12,11 @@ services:
       MYSQL_ROOT_PASSWORD: secret
 
   app:
-    build:
-      context: ./docker
+    image: jhmachado12/php:7.4-laravel
     container_name: app
     depends_on:
       - mysql
+    ports:
+      - "80:80"
     volumes:
       - .:/app:cached
-    ports: 
-      - "80:80"

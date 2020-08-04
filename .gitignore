@@ -5,6 +5,7 @@
 /vendor
 /docker
 /db-data
+.idea
 .env
 .env.backup
 .phpunit.result.cache

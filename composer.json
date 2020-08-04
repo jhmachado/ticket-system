@@ -31,13 +31,16 @@
     },
     "extra": {
         "laravel": {
+            "providers": [
+                "Modules\\Ticket\\ServiceProvider\\TicketServiceProvider"
+            ],
             "dont-discover": []
         }
     },
     "autoload": {
         "psr-4": {
             "App\\": "app/",
-            "Ticket\\": "Ticket/src"
+            "Modules\\": "Modules/"
         },
         "classmap": [
             "database/seeds",
