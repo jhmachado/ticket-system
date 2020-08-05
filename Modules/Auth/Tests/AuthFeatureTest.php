@@ -3,6 +3,7 @@
 namespace Modules\Auth\Tests;
 
 use Illuminate\Foundation\Testing\WithFaker;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 final class AuthFeatureTest extends TestCase
@@ -11,6 +12,13 @@ final class AuthFeatureTest extends TestCase
 
     public function testLoginUser_ShouldReturnASuccessfulResponseWithAnAccessToken(): void
     {
+        $successfulResponseBody = [
+            'access_token' => '123456',
+            'expires_in' => 600
+        ];
+
+        $this->mockResponse($successfulResponseBody, 200);
+
         $payload = [
             'username' => $this->faker->userName,
             'password' => $this->faker->password,
@@ -21,9 +29,27 @@ final class AuthFeatureTest extends TestCase
             'expires_in' => 600,
         ];
 
-        $this->postJson('/auth/login', $payload)
-            ->assertStatus(201)
-            ->assertExactJson($expectedResponse);
+        $response = $this->postJson('/auth/login', $payload);
+        $response->assertStatus(201);
+        $response->assertExactJson($expectedResponse);
+    }
+
+    public function testLoginUser_ShouldReturnAnErrorResponse_IfTheAuthenticationServiceReturnsAnErrorResponse(): void
+    {
+        $this->mockResponse($responseBody = [], $httpStatus = 400);
+
+        $payload = [
+            'username' => $this->faker->userName,
+            'password' => $this->faker->password,
+        ];
+
+        $expectedResponse = [
+            'error' => 'Could not generate an access token, try again later',
+        ];
+
+        $response = $this->postJson('/auth/login', $payload);
+        $response->assertStatus(400);
+        $response->assertExactJson($expectedResponse);
     }
 
     public static function provideInvalidPayloadsForLogin(): iterable
@@ -66,5 +92,11 @@ final class AuthFeatureTest extends TestCase
         $this->postJson('/auth/logout', $payload = [])
             ->assertStatus(200)
             ->assertExactJson($expectedResponse);
+    }
+
+    private function mockResponse(array $responseBody, int $httpStatus): void {
+        Http::fake([
+            '*' => Http::response($responseBody, $httpStatus),
+        ]);
     }
 }
