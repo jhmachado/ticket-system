@@ -32,6 +32,7 @@
     "extra": {
         "laravel": {
             "providers": [
+                "Modules\\Auth\\ServiceProvider\\AuthServiceProvider",
                 "Modules\\Ticket\\ServiceProvider\\TicketServiceProvider"
             ],
             "dont-discover": []
