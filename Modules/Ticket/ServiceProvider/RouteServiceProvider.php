@@ -15,7 +15,7 @@ final class RouteServiceProvider extends ServiceProvider
                 Route::get('/', 'TicketController@queryTickets');
                 Route::post('/', 'TicketController@createTicket');
                 Route::put('/{ticketId}', 'TicketController@updateTicket');
-                Route::put('/{ticket}/close', 'TicketController@closeTicket');
+                Route::put('/{ticketId}/close', 'TicketController@closeTicket');
             });
     }
 }

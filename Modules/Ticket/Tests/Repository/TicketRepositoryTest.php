@@ -27,6 +27,20 @@ final class TicketRepositoryTest extends TestCase
         $this->assertDatabaseHas($newTicket->getTable(), $newTicket->toArray());
     }
 
+    public function testSaveTicket_ShouldUpdateAnExistentTicket(): void
+    {
+        $originalTicket = factory(Ticket::class)->create();
+
+        $originalTicket->title = $this->faker->sentence;
+        $originalTicket->description = $this->faker->text;
+        $originalTicket->close();
+
+        $repository = new TicketRepository();
+        $newTicket = $repository->save($originalTicket);
+
+        $this->assertDatabaseHas($newTicket->getTable(), $newTicket->toArray());
+    }
+
     public function testQueryTickets_ShouldReturnACollectionWithAFewTickets(): void
     {
         factory(Ticket::class, 10)->create();

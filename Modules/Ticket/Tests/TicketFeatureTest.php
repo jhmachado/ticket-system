@@ -292,4 +292,20 @@ final class TicketFeatureTest extends TestCase
         $this->putJson("/ticket/unkown-id", $payload)
             ->assertStatus(404);
     }
+
+    public function testCloseTicket_ShouldReturnASuccessfulResponseWithTheExpectedMessage(): void
+    {
+        $originalTicket = factory(Ticket::class)->create();
+        $this->putJson("/ticket/{$originalTicket->id}/close")
+            ->assertStatus(200)
+            ->assertExactJson([
+                'message' => 'Ticket closed successfully!',
+            ]);
+    }
+
+    public function testCloseTicket_ShouldReturnANotFoundResponse_IfWePassAnUnknownId(): void
+    {
+        $this->putJson("/ticket/unkown-id/close")
+            ->assertStatus(404);
+    }
 }
