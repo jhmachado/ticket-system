@@ -27,11 +27,15 @@ final class TicketRepository
 
     public function queryTickets(string $page): Paginator
     {
-            return Ticket::simplePaginate(
+        return Ticket::simplePaginate(
             self::ITEMS_PER_PAGE,
             self::COLUMNS_TO_DISPLAY,
             self::PAGE_NAME,
             $page
         );
+    }
+
+    public function retrieveTicketByIdOrCry(string $ticketId): Ticket {
+        return Ticket::findOrFail($ticketId);
     }
 }
