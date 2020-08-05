@@ -170,4 +170,126 @@ final class TicketFeatureTest extends TestCase
             ->assertStatus(422)
             ->assertJson($expectedErrorResponse);
     }
+
+    public function testUpdateTicket_ShouldReturnASuccessFullResponseWithTheValuesOfTheTicket(): void
+    {
+        $existingTicket = factory(Ticket::class)->create();
+
+        $payload = [
+            'title' => $this->faker->title,
+            'description' => $this->faker->text,
+        ];
+
+        $this->putJson("/ticket/{$existingTicket->id}", $payload)
+            ->assertStatus(200)
+            ->assertJson($payload);
+    }
+
+    public function testUpdateTicket_ShouldReturnASuccessFullResponseWithTheValuesOfTheTicket_IfWeSendARequestJustWithTheTitle(): void
+    {
+        $existingTicket = factory(Ticket::class)->create();
+
+        $payload = [
+            'title' => $this->faker->title,
+        ];
+
+        $this->putJson("/ticket/{$existingTicket->id}", $payload)
+            ->assertStatus(200)
+            ->assertJson($payload)
+            ->assertJson([
+                'description' => $existingTicket->description
+            ]);
+    }
+
+    public function testUpdateTicket_ShouldReturnASuccessFullResponseWithTheValuesOfTheTicket_IfWeSendARequestJustWithTheDescription(): void
+    {
+        $existingTicket = factory(Ticket::class)->create();
+
+        $payload = [
+            'description' => $this->faker->text,
+        ];
+
+        $this->putJson("/ticket/{$existingTicket->id}", $payload)
+            ->assertStatus(200)
+            ->assertJson($payload)
+            ->assertJson([
+                'title' => $existingTicket->title
+            ]);
+    }
+
+    public function testUpdateTicket_ShouldReturnAnErrorResponse_IfWeSendATitleTooLarge(): void
+    {
+        $existingTicket = factory(Ticket::class)->create();
+
+        $payload = [
+            'title' => str_repeat('a', 256),
+            'description' => $this->faker->text,
+        ];
+
+        $expectedErrorResponse = [
+            'message' => 'The given data was invalid.',
+            'errors' => [
+                'title' => [
+                    'The title field can only have up to 255 characters'
+                ],
+            ],
+        ];
+
+        $this->putJson("/ticket/{$existingTicket->id}", $payload)
+            ->assertStatus(422)
+            ->assertJson($expectedErrorResponse);
+    }
+
+    public function testUpdateTicket_ShouldReturnAnErrorResponse_IfWeSendADescriptionTooLarge(): void
+    {
+        $existingTicket = factory(Ticket::class)->create();
+
+        $payload = [
+            'title' => $this->faker->title,
+            'description' => str_repeat('a', 501)
+        ];
+
+        $expectedErrorResponse = [
+            'message' => 'The given data was invalid.',
+            'errors' => [
+                'description' => [
+                    'The description field can only have up to 500 characters',
+                ],
+            ],
+        ];
+
+        $this->putJson("/ticket/{$existingTicket->id}", $payload)
+            ->assertStatus(422)
+            ->assertJson($expectedErrorResponse);
+    }
+
+    public function testUpdateTicket_ShouldReturnAnErrorResponse_IfWeSendAnEmptyPayload(): void
+    {
+        $existingTicket = factory(Ticket::class)->create();
+
+        $payload = [];
+        $expectedErrorResponse = [
+            'message' => 'The given data was invalid.',
+            'errors' => [
+                'description' => [
+                    'You need to provide at least one of the fields',
+                ],
+            ],
+        ];
+
+        $this->putJson("/ticket/{$existingTicket->id}", $payload)
+            ->assertStatus(422)
+            ->assertJson($expectedErrorResponse);
+    }
+
+    public function testUpdateTicket_ShouldReturnAnErrorResponse_IfWeSendAnInvalidTicketId(): void
+    {
+        $payload = [
+            'title' => $this->faker->title,
+            'description' => $this->faker->text,
+        ];
+
+        $this->putJson("/ticket/unkown-id", $payload)
+            ->assertStatus(404);
+    }
 }

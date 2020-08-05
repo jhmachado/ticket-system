@@ -14,7 +14,7 @@ final class RouteServiceProvider extends ServiceProvider
             ->group(function () {
                 Route::get('/', 'TicketController@queryTickets');
                 Route::post('/', 'TicketController@createTicket');
-                Route::put('/{ticket}', 'TicketController@updateTicket');
+                Route::put('/{ticketId}', 'TicketController@updateTicket');
                 Route::put('/{ticket}/close', 'TicketController@closeTicket');
             });
     }
