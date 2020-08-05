@@ -36,8 +36,12 @@ final class TicketController extends BaseController
         return Response::json($ticket);
     }
 
-    public function closeTicket()
+    public function closeTicket(TicketRepository $repository, string $ticketId): JsonResponse
     {
+        $ticket = $repository->retrieveTicketByIdOrCry($ticketId);
+        $ticket->close();
+        $repository->save($ticket);
 
+        return Response::json(['message' => 'Ticket closed successfully!']);
     }
 }
