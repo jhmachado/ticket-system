@@ -12,7 +12,7 @@
             <directory suffix="Test.php">./tests/Feature</directory>
         </testsuite>
         <testsuite name="TicketModule">
-            <directory suffix="Test.php">./Ticket/tests</directory>
+            <directory suffix="Test.php">./Modules/*</directory>
         </testsuite>
     </testsuites>
     <filter>
@@ -30,5 +30,6 @@
         <server name="QUEUE_CONNECTION" value="sync"/>
         <server name="SESSION_DRIVER" value="array"/>
         <server name="TELESCOPE_ENABLED" value="false"/>
+        <const name="PHPUNIT_RUNNING" value="true"/>
     </php>
 </phpunit>
