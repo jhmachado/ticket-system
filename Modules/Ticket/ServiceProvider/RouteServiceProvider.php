@@ -11,6 +11,7 @@ final class RouteServiceProvider extends ServiceProvider
     {
         Route::namespace('\Modules\Ticket\Http\Controllers')
             ->prefix('ticket')
+            ->middleware(['access-token'])
             ->group(function () {
                 Route::get('/', 'TicketController@queryTickets');
                 Route::post('/', 'TicketController@createTicket');
