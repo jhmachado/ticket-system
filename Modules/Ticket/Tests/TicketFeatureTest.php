@@ -4,6 +4,7 @@ namespace Modules\Ticket\Tests;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
+use Illuminate\Support\Facades\Http;
 use Modules\Ticket\Model\Ticket;
 use Tests\TestCase;
 
@@ -14,6 +15,7 @@ final class TicketFeatureTest extends TestCase
 
     public function testQueryTickets_ShouldReturnAResponseWithPageableContent(): void
     {
+        $this->mockAccessTokenAcceptedResponse();
         $payload = factory(Ticket::class, 15)->create();
 
         $expectedResponseContent = [
@@ -28,13 +30,16 @@ final class TicketFeatureTest extends TestCase
             'to' => 15,
         ];
 
-        $this->get('/ticket')
-            ->assertStatus(200)
-            ->assertExactJson($expectedResponseContent);
+        $response = $this->withHeader('Authorization', 'some-access-token')
+            ->get('/ticket');
+
+        $response->assertStatus(200);
+        $response->assertExactJson($expectedResponseContent);
     }
 
     public function testQueryTickets_ShouldReturnTheSecondPage_WhenTheUriParameterLeadToTheSecondPage(): void
     {
+        $this->mockAccessTokenAcceptedResponse();
         $payload = factory(Ticket::class, 16)->create();
 
         $expectedResponseContent = [
@@ -51,13 +56,16 @@ final class TicketFeatureTest extends TestCase
             'to' => 16,
         ];
 
-        $this->get('/ticket?page=2')
-            ->assertStatus(200)
-            ->assertExactJson($expectedResponseContent);
+        $response = $this->withHeader('Authorization', 'some-access-token')
+            ->get('/ticket?page=2');
+
+        $response->assertStatus(200);
+        $response->assertExactJson($expectedResponseContent);
     }
 
     public function testQueryTickets_ShouldReturnAnEmptyResponse_WhenThereIsNotTicketSaved(): void
     {
+        $this->mockAccessTokenAcceptedResponse();
         $expectedResponseContent = [
             'current_page' => 1,
             'data' => [],
@@ -70,25 +78,43 @@ final class TicketFeatureTest extends TestCase
             'to' => null,
         ];
 
-        $this->get('/ticket')
-            ->assertStatus(200)
-            ->assertJson($expectedResponseContent);
+        $response = $this->withHeader('Authorization', 'some-access-token')
+            ->get('/ticket');
+
+        $response->assertStatus(200);
+        $response->assertJson($expectedResponseContent);
+    }
+
+    public function testQueryTickets_ShouldReturnAnForbiddenResponse_IfTheAuthenticationServiceRejectsTheAccessToken(): void
+    {
+        $this->mockAccessTokenRejectionResponse();
+
+        $response = $this->get('/ticket');
+
+        $response->assertStatus(403);
+        $response->assertExactJson([
+            'error' => 'Access denied',
+        ]);
     }
 
     public function testCreateNewTicket_ShouldReturnAResponseWithTheContentOfTheNewTicket(): void
     {
+        $this->mockAccessTokenAcceptedResponse();
         $payload = [
             'title' => $this->faker->title,
             'description' => $this->faker->text,
         ];
 
-        $this->postJson('/ticket', $payload)
-            ->assertStatus(201)
-            ->assertJson($payload);
+        $response = $this->withHeader('Authorization', 'some-access-token')
+            ->postJson('/ticket', $payload);
+
+        $response->assertStatus(201);
+        $response->assertJson($payload);
     }
 
     public function testCreateNewTicket_ShouldReturnAnErrorResponse_IfTheNewTicketTitleIsEmpty(): void
     {
+        $this->mockAccessTokenAcceptedResponse();
         $payload = [
             'title' => '',
             'description' => $this->faker->text,
@@ -103,13 +129,16 @@ final class TicketFeatureTest extends TestCase
             ],
         ];
 
-        $this->postJson('/ticket', $payload)
-            ->assertStatus(422)
-            ->assertJson($expectedErrorResponse);
+        $response = $this->withHeader('Authorization', 'some-access-token')
+            ->postJson('/ticket', $payload);
+
+        $response->assertStatus(422);
+        $response->assertJson($expectedErrorResponse);
     }
 
     public function testCreateNewTicket_ShouldReturnAnErrorResponse_IfTheNewTicketTitleIsTooLarge(): void
     {
+        $this->mockAccessTokenAcceptedResponse();
         $payload = [
             'title' => str_repeat("a", 256),
             'description' => $this->faker->text,
@@ -124,13 +153,16 @@ final class TicketFeatureTest extends TestCase
             ],
         ];
 
-        $this->postJson('/ticket', $payload)
-            ->assertStatus(422)
-            ->assertJson($expectedErrorResponse);
+        $response = $this->withHeader('Authorization', 'some-access-token')
+            ->postJson('/ticket', $payload);
+
+        $response->assertStatus(422);
+        $response->assertJson($expectedErrorResponse);
     }
 
     public function testCreateNewTicket_ShouldReturnAnErrorResponse_IfTheNewTicketDescriptionIsEmpty(): void
     {
+        $this->mockAccessTokenAcceptedResponse();
         $payload = [
             'title' => $this->faker->title,
             'description' => '',
@@ -145,13 +177,16 @@ final class TicketFeatureTest extends TestCase
             ],
         ];
 
-        $this->postJson('/ticket', $payload)
-            ->assertStatus(422)
-            ->assertJson($expectedErrorResponse);
+        $response = $this->withHeader('Authorization', 'some-access-token')
+            ->postJson('/ticket', $payload);
+
+        $response->assertStatus(422);
+        $response->assertJson($expectedErrorResponse);
     }
 
     public function testCreateNewTicket_ShouldReturnAnErrorResponse_IfTheNewTicketDescriptionIsTooLarge(): void
     {
+        $this->mockAccessTokenAcceptedResponse();
         $payload = [
             'title' => $this->faker->title,
             'description' => str_repeat("a", 501),
@@ -166,13 +201,33 @@ final class TicketFeatureTest extends TestCase
             ],
         ];
 
-        $this->postJson('/ticket', $payload)
-            ->assertStatus(422)
-            ->assertJson($expectedErrorResponse);
+        $response = $this->withHeader('Authorization', 'some-access-token')
+            ->postJson('/ticket', $payload);
+
+        $response->assertStatus(422);
+        $response->assertJson($expectedErrorResponse);
+    }
+
+    public function testCreateNewTicket_ShouldReturnAnForbiddenResponse_IfTheAuthenticationServiceRejectsTheAccessToken(): void
+    {
+        $this->mockAccessTokenRejectionResponse();
+
+        $payload = [
+            'title' => $this->faker->title,
+            'description' => $this->faker->text,
+        ];
+
+        $response = $this->postJson('/ticket', $payload);
+
+        $response->assertStatus(403);
+        $response->assertExactJson([
+            'error' => 'Access denied',
+        ]);
     }
 
     public function testUpdateTicket_ShouldReturnASuccessFullResponseWithTheValuesOfTheTicket(): void
     {
+        $this->mockAccessTokenAcceptedResponse();
         $existingTicket = factory(Ticket::class)->create();
 
         $payload = [
@@ -180,45 +235,54 @@ final class TicketFeatureTest extends TestCase
             'description' => $this->faker->text,
         ];
 
-        $this->putJson("/ticket/{$existingTicket->id}", $payload)
-            ->assertStatus(200)
-            ->assertJson($payload);
+        $response = $this->withHeader('Authorization', 'some-access-token')
+            ->putJson("/ticket/{$existingTicket->id}", $payload);
+
+        $response->assertStatus(200);
+        $response->assertJson($payload);
     }
 
     public function testUpdateTicket_ShouldReturnASuccessFullResponseWithTheValuesOfTheTicket_IfWeSendARequestJustWithTheTitle(): void
     {
+        $this->mockAccessTokenAcceptedResponse();
         $existingTicket = factory(Ticket::class)->create();
 
         $payload = [
             'title' => $this->faker->title,
         ];
 
-        $this->putJson("/ticket/{$existingTicket->id}", $payload)
-            ->assertStatus(200)
-            ->assertJson($payload)
-            ->assertJson([
-                'description' => $existingTicket->description
-            ]);
+        $response = $this->withHeader('Authorization', 'some-access-token')
+            ->putJson("/ticket/{$existingTicket->id}", $payload);
+
+        $response->assertStatus(200);
+        $response->assertJson($payload);
+        $response->assertJson([
+            'description' => $existingTicket->description
+        ]);
     }
 
     public function testUpdateTicket_ShouldReturnASuccessFullResponseWithTheValuesOfTheTicket_IfWeSendARequestJustWithTheDescription(): void
     {
+        $this->mockAccessTokenAcceptedResponse();
         $existingTicket = factory(Ticket::class)->create();
 
         $payload = [
             'description' => $this->faker->text,
         ];
 
-        $this->putJson("/ticket/{$existingTicket->id}", $payload)
-            ->assertStatus(200)
-            ->assertJson($payload)
-            ->assertJson([
-                'title' => $existingTicket->title
-            ]);
+        $response = $this->withHeader('Authorization', 'some-access-token')
+            ->putJson("/ticket/{$existingTicket->id}", $payload);
+
+        $response->assertStatus(200);
+        $response->assertJson($payload);
+        $response->assertJson([
+            'title' => $existingTicket->title
+        ]);
     }
 
     public function testUpdateTicket_ShouldReturnAnErrorResponse_IfWeSendATitleTooLarge(): void
     {
+        $this->mockAccessTokenAcceptedResponse();
         $existingTicket = factory(Ticket::class)->create();
 
         $payload = [
@@ -235,13 +299,16 @@ final class TicketFeatureTest extends TestCase
             ],
         ];
 
-        $this->putJson("/ticket/{$existingTicket->id}", $payload)
-            ->assertStatus(422)
-            ->assertJson($expectedErrorResponse);
+        $response = $this->withHeader('Authorization', 'some-access-token')
+            ->putJson("/ticket/{$existingTicket->id}", $payload);
+
+        $response->assertStatus(422);
+        $response->assertJson($expectedErrorResponse);
     }
 
     public function testUpdateTicket_ShouldReturnAnErrorResponse_IfWeSendADescriptionTooLarge(): void
     {
+        $this->mockAccessTokenAcceptedResponse();
         $existingTicket = factory(Ticket::class)->create();
 
         $payload = [
@@ -258,13 +325,16 @@ final class TicketFeatureTest extends TestCase
             ],
         ];
 
-        $this->putJson("/ticket/{$existingTicket->id}", $payload)
-            ->assertStatus(422)
-            ->assertJson($expectedErrorResponse);
+        $response = $this->withHeader('Authorization', 'some-access-token')
+            ->putJson("/ticket/{$existingTicket->id}", $payload);
+
+        $response->assertStatus(422);
+        $response->assertJson($expectedErrorResponse);
     }
 
     public function testUpdateTicket_ShouldReturnAnErrorResponse_IfWeSendAnEmptyPayload(): void
     {
+        $this->mockAccessTokenAcceptedResponse();
         $existingTicket = factory(Ticket::class)->create();
 
         $payload = [];
@@ -277,35 +347,93 @@ final class TicketFeatureTest extends TestCase
             ],
         ];
 
-        $this->putJson("/ticket/{$existingTicket->id}", $payload)
-            ->assertStatus(422)
-            ->assertJson($expectedErrorResponse);
+        $response = $this->withHeader('Authorization', 'some-access-token')
+            ->putJson("/ticket/{$existingTicket->id}", $payload);
+
+        $response->assertStatus(422);
+        $response->assertJson($expectedErrorResponse);
     }
 
     public function testUpdateTicket_ShouldReturnAnErrorResponse_IfWeSendAnInvalidTicketId(): void
     {
+        $this->mockAccessTokenAcceptedResponse();
         $payload = [
             'title' => $this->faker->title,
             'description' => $this->faker->text,
         ];
 
-        $this->putJson("/ticket/unkown-id", $payload)
-            ->assertStatus(404);
+        $response = $this->withHeader('Authorization', 'some-access-token')
+            ->putJson("/ticket/unkown-id", $payload);
+
+        $response->assertStatus(404);
+    }
+
+    public function testUpdateTicket_ShouldReturnAnForbiddenResponse_IfTheAuthenticationServiceRejectsTheAccessToken(): void
+    {
+        $this->mockAccessTokenRejectionResponse();
+        $existingTicket = factory(Ticket::class)->create();
+
+        $payload = [
+            'description' => $this->faker->text,
+        ];
+
+        $response = $this->putJson("/ticket/{$existingTicket->id}", $payload);
+
+        $response->assertStatus(403);
+        $response->assertExactJson([
+            'error' => 'Access denied',
+        ]);
     }
 
     public function testCloseTicket_ShouldReturnASuccessfulResponseWithTheExpectedMessage(): void
     {
+        $this->mockAccessTokenAcceptedResponse();
+
         $originalTicket = factory(Ticket::class)->create();
-        $this->putJson("/ticket/{$originalTicket->id}/close")
-            ->assertStatus(200)
-            ->assertExactJson([
-                'message' => 'Ticket closed successfully!',
-            ]);
+
+        $response = $this->withHeader('Authorization', 'some-access-token')
+            ->putJson("/ticket/{$originalTicket->id}/close");
+
+        $response->assertStatus(200);
+        $response->assertExactJson([
+            'message' => 'Ticket closed successfully!',
+        ]);
     }
 
     public function testCloseTicket_ShouldReturnANotFoundResponse_IfWePassAnUnknownId(): void
     {
-        $this->putJson("/ticket/unkown-id/close")
-            ->assertStatus(404);
+        $this->mockAccessTokenAcceptedResponse();
+
+        $response = $this->withHeader('Authorization', 'some-access-token')
+            ->putJson("/ticket/unkown-id/close");
+
+        $response->assertStatus(404);
+    }
+
+    public function testCloseTicket_ShouldReturnAnForbiddenResponse_IfTheAuthenticationServiceRejectsTheAccessToken(): void
+    {
+        $this->mockAccessTokenRejectionResponse();
+        $originalTicket = factory(Ticket::class)->create();
+
+        $response = $this->putJson("/ticket/{$originalTicket->id}/close");
+
+        $response->assertStatus(403);
+        $response->assertExactJson([
+            'error' => 'Access denied',
+        ]);
+    }
+
+    private function mockAccessTokenAcceptedResponse(): void
+    {
+        Http::fake([
+            '*' => Http::response(['active' => true], 200),
+        ]);
+    }
+
+    private function mockAccessTokenRejectionResponse(): void
+    {
+        Http::fake([
+            '*' => Http::response(['active' => false], 200),
+        ]);
     }
 }

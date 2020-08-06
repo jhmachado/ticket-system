@@ -10,9 +10,13 @@ use Modules\Auth\Models\AccessToken;
 
 final class KeyCloakAuthService implements AuthService
 {
+    private const KEY_CLOAK_CREATE_TOKEN_ENDPOINT = 'auth/realms/ticket-system/protocol/openid-connect/token';
+
+    private const KEY_CLOAK_VALIDATE_TOKEN_ENDPOINT = 'auth/realms/ticket-system/protocol/openid-connect/token/introspect';
+
     public function login(string $username, string $password): ?AccessToken
     {
-        $uri = self::createUri();
+        $uri = self::createUri(self::KEY_CLOAK_CREATE_TOKEN_ENDPOINT);
         $payload = self::composePayload($username, $password);
         $response = Http::asForm()->post($uri, $payload);
 
@@ -26,9 +30,33 @@ final class KeyCloakAuthService implements AuthService
         return null;
     }
 
-    private static function createUri(): string {
+    public function validateAccessToken(string $accessToken): bool
+    {
+        $uri = self::createUri(self::KEY_CLOAK_VALIDATE_TOKEN_ENDPOINT);
+        $payload = [
+            'token' => $accessToken,
+        ];
+
+        $clientId = config('keycloak.client_id');
+        $secret = config('keycloak.secret');
+
+        $response = Http::withBasicAuth($clientId, $secret)
+            ->asForm()
+            ->post($uri, $payload);
+
+        if ($response->ok()) {
+            return ($response['active'] ?? 'false') == "true";
+        }
+
+        $logMessage = "Error while trying to validate the access token: {$accessToken}";
+        Log::alert($logMessage);
+
+        return false;
+    }
+
+    private static function createUri(string $endpoint): string {
         $keycloakHost = config('keycloak.host');
-        return "{$keycloakHost}auth/realms/ticket-system/protocol/openid-connect/token";
+        return $keycloakHost . $endpoint;
     }
 
     private static function composePayload(string $username, string $password): array {
