@@ -4,6 +4,7 @@ namespace Modules\Ticket\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Response;
+use Modules\Ticket\Event\TicketCreatedEvent;
 use Modules\Ticket\Http\Requests\CreateTicketRequest;
 use Modules\Ticket\Http\Requests\UpdateTicketRequest;
 use Modules\Ticket\Model\Ticket;
@@ -23,6 +24,8 @@ final class TicketController extends BaseController
         $newTicket = new Ticket();
         $newTicket->fill($request->input());
         $repository->save($newTicket);
+
+        event(new TicketCreatedEvent($newTicket));
 
         return Response::json($newTicket, 201);
     }
