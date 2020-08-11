@@ -1,0 +1,16 @@
+version: '3.4'
+
+services:
+  newlrelic:
+    image: newrelic/php-daemon
+    container_name: newrelic-php-daemon
+
+  app-newrelic:
+    image: jhmachado12/php:7.4-laravel-with-newrelic
+    container_name: app-with-newrelic
+    environment:
+      SHOULD_SKIP_MIGRATIONS: 1
+    volumes:
+      - .:/app:cached
+    ports:
+      - "8081:80"
