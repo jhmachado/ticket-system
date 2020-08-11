@@ -1,0 +1,41 @@
+version: '3.4'
+
+services:
+  app:
+    environment:
+      CONTAINER_ROLE: app
+    entrypoint: ./entrypoint.sh
+
+  app-queue:
+    image: jhmachado12/php:7.4-laravel
+    container_name: app-queue
+    entrypoint: ./entrypoint.sh
+    environment:
+      SHOULD_SKIP_MIGRATIONS: 1
+      CONTAINER_ROLE: queue
+    depends_on:
+      - app
+      - redis
+    volumes:
+      - .:/app
+
+  app-horizon:
+    image: jhmachado12/php:7.4-laravel
+    container_name: app-horizon
+    entrypoint: ./entrypoint.sh
+    environment:
+      SHOULD_SKIP_MIGRATIONS: 1
+      CONTAINER_ROLE: horizon
+    depends_on:
+      - app
+      - redis
+    volumes:
+      - .:/app
+
+  redis:
+    container_name: redis
+    image: redis:6.0.6-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./redis-data:/data
