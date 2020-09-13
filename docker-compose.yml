@@ -1,6 +1,25 @@
 version: '3.4'
 
 services:
+  app:
+    image: php:8.0-rc-fpm
+    container_name: app
+    depends_on:
+      - web
+      - mysql
+    #      - keycloak
+    ports:
+      - "9000:9000"
+    volumes:
+      - .:/var/www/html
+
+  web:
+    build:
+      context: ./docker/caddy
+    ports:
+      - 80:80
+      - 443:443
+
   mysql:
     image: jhmachado12/mysql:8
     container_name: mysql
@@ -27,13 +46,3 @@ services:
     depends_on:
       - mysql
 
-  app:
-    image: jhmachado12/php:7.4-laravel
-    container_name: app
-    depends_on:
-      - mysql
-      - keycloak
-    ports:
-      - "80:80"
-    volumes:
-      - .:/app:cached
